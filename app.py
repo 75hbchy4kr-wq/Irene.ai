@@ -1,42 +1,52 @@
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
+import streamlit as st
 from openai import OpenAI
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
+# Page setup
+st.set_page_config(page_title="Irene AI Chat", page_icon="🤖")
+st.title("Irene AI Assistant")
 
-app = FastAPI()
+# Get API key from Streamlit secrets
+api_key = st.secrets.get("XAI_API_KEY")
 
-# Allow your website to call this API
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Change to your domain later for security
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+if not api_key:
+    st.error("Please add your XAI_API_KEY in Streamlit Secrets")
+    st.stop()
 
 client = OpenAI(
-    api_key=os.getenv("XAI_API_KEY"),
+    api_key=api_key,
     base_url="https://api.x.ai/v1"
 )
 
-SYSTEM_PROMPT = """You are a helpful assistant for my website. 
-Answer questions clearly and politely. 
-If you don't know something, say so."""
+# Initialize chat history
+if "messages" not in st.session_state:
+    st.session_state.messages = [
+        {"role": "system", "content": "You are Irene, a helpful and friendly AI assistant."}
+    ]
 
-@app.post("/chat")
-async def chat(request: Request):
-    data = await request.json()
-    user_message = data.get("message", "")
+# Show previous messages
+for msg in st.session_state.messages:
+    if msg["role"] != "system":
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
 
-    response = client.chat.completions.create(
-        model="grok-4.6",
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_message}
-        ],
-        temperature=0.7
-    )
+# User input
+if prompt := st.chat_input("Ask me anything..."):
+    # Add user message
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
-    reply = response.choices
+    # Get AI response
+    with st.chat_message("assistant"):
+        with st.spinner("Thinking..."):
+            response = client.chat.completions.create(
+                model="grok-4.6",
+                messages=st.session_state.messages,
+                temperature=0.7
+            )
+            reply = response.choices[0].message.content
+            st.markdown(reply)
+
+    # Save AI reply
+    st.session_state.messages.append({"role": "assistant", "content": reply})
