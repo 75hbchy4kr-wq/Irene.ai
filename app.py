@@ -6,22 +6,19 @@ st.set_page_config(
 )
 
 st.title("🤖 Irene AI")
+st.write("Ask me anything!")
 
-st.write("Welcome to my website!")
+question = st.chat_input("Type your question here...")
 
-st.header("Ask a question")
+if question:
+    st.chat_message("user").write(question)
 
-name = st.text_input("What's your name?")
-
-if name:
-    st.success(f"Hello, {name}! 👋")
-
-question = st.text_area("What would you like to ask?")
-
-if st.button("Submit"):
-    if question:
-        st.info("Your question was received!")
-        st.write("You asked:")
-        st.write(question)
+    # Temporary response
+    if "hello" in question.lower():
+        answer = "Hello! 👋 How can I help you?"
+    elif "who are you" in question.lower():
+        answer = "I'm Irene AI, your AI assistant!"
     else:
-        st.warning("Please enter a question first.")
+        answer = "Thanks for your question! AI responses will be connected here soon."
+
+    st.chat_message("assistant").write(answer)
