@@ -1,24 +1,42 @@
-import streamlit as st
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from openai import OpenAI
+import os
+from dotenv import load_dotenv
 
-st.set_page_config(
-    page_title="Irene AI",
-    page_icon="🤖"
+load_dotenv()
+
+app = FastAPI()
+
+# Allow your website to call this API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Change to your domain later for security
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-st.title("🤖 Irene AI")
-st.write("Ask me anything!")
+client = OpenAI(
+    api_key=os.getenv("XAI_API_KEY"),
+    base_url="https://api.x.ai/v1"
+)
 
-question = st.chat_input("Type your question here...")
+SYSTEM_PROMPT = """You are a helpful assistant for my website. 
+Answer questions clearly and politely. 
+If you don't know something, say so."""
 
-if question:
-    st.chat_message("user").write(question)
+@app.post("/chat")
+async def chat(request: Request):
+    data = await request.json()
+    user_message = data.get("message", "")
 
-    # Temporary response
-    if "hello" in question.lower():
-        answer = "Hello! 👋 How can I help you?"
-    elif "who are you" in question.lower():
-        answer = "I'm Irene AI, your AI assistant!"
-    else:
-        answer = "Thanks for your question! AI responses will be connected here soon."
+    response = client.chat.completions.create(
+        model="grok-4.6",
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_message}
+        ],
+        temperature=0.7
+    )
 
-    st.chat_message("assistant").write(answer)
+    reply = response.choices
