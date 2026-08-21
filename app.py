@@ -1,23 +1,27 @@
 import streamlit as st
 
+st.set_page_config(
+    page_title="Irene AI",
+    page_icon="🤖"
+)
 
-st.set_page_config(page_title="My AI", page_icon="🤖")
+st.title("🤖 Irene AI")
 
-st.title("🤖 My AI")
-st.write("Ask me anything!")
+st.write("Welcome to my website!")
 
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+st.header("Ask a question")
 
-question = st.chat_input("Type your question...")
+name = st.text_input("What's your name?")
 
-if question:
-    st.chat_message("user").write(question)
+if name:
+    st.success(f"Hello, {name}! 👋")
 
-    with st.chat_message("assistant"):
-        with st.spinner("Thinking..."):
-            response = client.responses.create(
-                model="gpt-5.6-mini",
-                input=question
-            )
+question = st.text_area("What would you like to ask?")
 
-            st.write(response.output_text)
+if st.button("Submit"):
+    if question:
+        st.info("Your question was received!")
+        st.write("You asked:")
+        st.write(question)
+    else:
+        st.warning("Please enter a question first.")
